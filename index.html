@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cart Sharing Demo</title>
+  <script>
+    const ws = new WebSocket('ws://localhost:8080');
+    
+    ws.onmessage = function(event) {
+      const data = JSON.parse(event.data);
+      
+      if (data.type === 'cart') {
+        document.getElementById('cart').innerText = JSON.stringify(data.cart, null, 2);
+      }
+
+      if (data.type === 'finalized') {
+        alert('Cart finalized!');
+      }
+    };
+
+    function updateCart() {
+      const product = document.getElementById('product').value;
+      const quantity = document.getElementById('quantity').value;
+
+      const cartUpdate = {
+        type: 'update_cart',
+        cart: { [product]: quantity }
+      };
+
+      ws.send(JSON.stringify(cartUpdate));
+    }
+
+    function finalizeCart() {
+      ws.send(JSON.stringify({ type: 'finalize_cart' }));
+    }
+  </script>
+</head>
+<body>
+  <h1>Cart Sharing Demo</h1>
+
+  <div>
+    <label>Product: <input type="text" id="product"></label>
+    <label>Quantity: <input type="number" id="quantity" min="1"></label>
+    <button onclick="updateCart()">Update Cart</button>
+    <button onclick="finalizeCart()">Finalize Cart</button>
+  </div>
+
+  <h2>Shared Cart</h2>
+  <pre id="cart">No items yet.</pre>
+</body>
+</html>

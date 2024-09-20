@@ -6,7 +6,8 @@
   <title>Cart Sharing Demo</title>
   <link rel="stylesheet" href="style.css">
   <script>
-    const ws = new WebSocket('ws://localhost:8080');
+    const sessionId = new URLSearchParams(window.location.search).get('sessionId') || generateSessionId();
+    const ws = new WebSocket(`ws://localhost:8080?sessionId=${sessionId}`);
     
     ws.onmessage = function(event) {
       const data = JSON.parse(event.data);
@@ -61,6 +62,17 @@
     function finalizeCart() {
       ws.send(JSON.stringify({ type: 'finalize_cart' }));
     }
+
+    // Function to generate a unique session ID
+    function generateSessionId() {
+      return Math.random().toString(36).substring(2, 9);
+    }
+
+    // Function to generate a sharable link
+    function shareCartLink() {
+      const link = `${window.location.origin}${window.location.pathname}?sessionId=${sessionId}`;
+      document.getElementById('shareLink').value = link;
+    }
   </script>
 </head>
 <body>
@@ -86,5 +98,10 @@
       <!-- Cart items will be displayed here -->
     </tbody>
   </table>
+
+  <br>
+  <button onclick="shareCartLink()">Generate Sharable Link</button>
+  <h2>Sharable Link</h2>
+  <input type="text" id="shareLink" readonly style="width: 100%;">
 </body>
 </html>

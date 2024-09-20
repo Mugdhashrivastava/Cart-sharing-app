@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cart Sharing Demo</title>
+  <link rel="stylesheet" href="style.css">
   <script>
     const ws = new WebSocket('ws://localhost:8080');
     
@@ -11,7 +12,7 @@
       const data = JSON.parse(event.data);
       
       if (data.type === 'cart') {
-        document.getElementById('cart').innerText = JSON.stringify(data.cart, null, 2);
+        updateCartDisplay(data.cart);
       }
 
       if (data.type === 'finalized') {
@@ -19,13 +20,39 @@
       }
     };
 
-    function updateCart() {
+    function updateCartDisplay(cart) {
+      const cartTable = document.getElementById('cartTable');
+      cartTable.innerHTML = '';  // Clear existing rows
+
+      for (const product in cart) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${product}</td>
+          <td>${cart[product]}</td>
+          <td>
+            <button onclick="removeFromCart('${product}')">Remove</button>
+          </td>
+        `;
+        cartTable.appendChild(row);
+      }
+    }
+
+    function addToCart() {
       const product = document.getElementById('product').value;
       const quantity = document.getElementById('quantity').value;
 
       const cartUpdate = {
         type: 'update_cart',
         cart: { [product]: quantity }
+      };
+
+      ws.send(JSON.stringify(cartUpdate));
+    }
+
+    function removeFromCart(product) {
+      const cartUpdate = {
+        type: 'update_cart',
+        cart: { [product]: 0 }  // 0 quantity means remove
       };
 
       ws.send(JSON.stringify(cartUpdate));
@@ -42,11 +69,22 @@
   <div>
     <label>Product: <input type="text" id="product"></label>
     <label>Quantity: <input type="number" id="quantity" min="1"></label>
-    <button onclick="updateCart()">Update Cart</button>
+    <button onclick="addToCart()">Add to Cart</button>
     <button onclick="finalizeCart()">Finalize Cart</button>
   </div>
 
-  <h2>Shared Cart</h2>
-  <pre id="cart">No items yet.</pre>
+  <h2>Cart</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Quantity</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="cartTable">
+      <!-- Cart items will be displayed here -->
+    </tbody>
+  </table>
 </body>
 </html>
